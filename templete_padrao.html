@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diploma</title>
+    <style>
+        body {
+            font-family: 'Lato', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #676a6d;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .diploma-container {
+            width: 100%;
+            width: 900px;
+            padding: 50px;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 1);
+            box-sizing: border-box;
+        }
+
+        .header {
+            text-align: center;
+            font-size: 36px;
+            font-weight: bold;
+            color: #dc143c;
+            margin-bottom: 30px;
+        }
+
+        .sub-header {
+            text-align: center;
+            font-size: 22px;
+            color: #6c757d;
+            margin: 10px 0;
+        }
+
+        .content {
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 40px;
+            text-align: justify;
+        }
+
+        .content .highlight {
+            font-weight: bold;
+            color: #dc143c;
+        }
+
+
+        .date {
+            text-align: center;
+            font-size: 18px;
+            margin-top: 40px;
+            color: #6c757d;
+        }
+
+        .signatures {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            text-align: center;
+        }
+
+        .signature {
+            flex: 1;
+            padding: 20px;
+            font-size: 18px;
+        }
+
+        .signature p {
+            margin: 10px 0;
+        }
+
+        .signature hr {
+            margin: 40px 0;
+            border: none;
+            border-top: 1px solid #dc143c;
+            width: 90%;
+            margin-left: auto;  
+            margin-right: auto;
+        }
+
+        .signature-title {
+            font-weight: bold;  
+            color: #212529;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="diploma-container">
+        <div class="header">Universidade de Programação</div>
+        <div class="sub-header">Certificado de Conclusão</div>
+        <div class="content">
+            <p>Certificamos que <strong class="highlight">[[nome]]</strong>, [[nacionalidade]], natural do Estado de <strong class="highlight">[[estado]]</strong>, nascido em [[data_nascimento]], RG [[documento]], concluiu em <strong class="highlight">[[data_conclusao]]</strong> o curso de <strong class="highlight">[[curso]]</strong>, nível de especialização, com carga horária de <strong class="highlight">[[carga_horaria]]</strong> horas.</p>
+            <p>Este certificado é concedido em conformidade com o artigo 44, inciso 3353, da Lei 9394/96, e com a Resolução C.N.C./C.C.S. nº 01/07.</p>
+        </div>
+        <div class="date">São Paulo, [[data_emissao]]</div>
+        <div class="signatures">
+            <div class="signature">
+                <div class="signature-title">[[nome_assinatura]]</div>
+                <p>[[cargo]]</p>
+                <hr>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
