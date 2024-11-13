@@ -18,3 +18,8 @@
 docker-compose up
 
 http://localhost:3000/diploma
+
+
+
+git config --global user.name "Leonardoabs"
+git config --global user.email "leoalves.abs@gmail.com"
