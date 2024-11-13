@@ -1,0 +1,52 @@
+services:
+  postgres:
+    image: postgres
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=certificates
+    ports:
+      - "5432:5432"
+    networks:
+      - certificado_network
+    volumes:
+      - ./db/ddl.sql:/docker-entrypoint-initdb.d/ddl.sql
+  
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - certificado_network
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres
+      - rabbitmq
+    ports:
+      - "3000:3000"
+    networks:
+      - certificado_network
+
+  worker:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    depends_on:
+      - rabbitmq
+      - postgres
+    volumes:
+      - ./worker/arquivo_pdf:/app/worker/arquivo_pdf
+    networks:
+      - certificado_network
+
+networks:
+  certificado_network:
+    driver: bridge
+
+volumes:
+  arquivo_pdf:
