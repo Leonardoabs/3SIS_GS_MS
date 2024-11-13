@@ -93,7 +93,7 @@ const workerFunction = async () => {
       console.log("Worker iniciando...");
       break;
     } catch (err) {
-      retries += 1; // Incrementa o contador de tentativas
+      retries += 1;
       console.error(
         `Erro na conexão. Tentando novamente... (${retries}/${maxRetries})`
       );

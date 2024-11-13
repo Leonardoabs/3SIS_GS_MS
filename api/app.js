@@ -27,8 +27,8 @@ const client = new Client({
 });
 
 // Conexão PostgreSQL
-const clientInit = async () => {
-  const maxRetries = 5;
+const initConnection = async () => {
+  const maxRetries = 6;
   let retries = 0;
 
   while (retries < maxRetries) {
@@ -46,7 +46,7 @@ const clientInit = async () => {
   }
 };
 
-clientInit();
+initConnection();
 
 // Enviar mensagens para a fila RabbitMQ
 const envioMsg = async (message) => {
@@ -62,12 +62,12 @@ const envioMsg = async (message) => {
       persistent: true,
     });
 
-    console.log("Mensagem enviada para a fila RabbitMQ: ", message);
+    console.log("Mensagem enviada para a fila: ", message);
 
     await channel.close();
     await connection.close();
   } catch (error) {
-    console.error("Erro ao enviar mensagem para RabbitMQ:", error);
+    console.error("Erro ao enviar mensagem para a fila:", error);
   }
 };
 
@@ -88,7 +88,7 @@ app.post("/diploma", async (req, res) => {
 
   // Verificação se os dados foram fornecidos
   if (!nome || !nacionalidade || !estado || !data_nascimento || !rg || !data_termino || !curso || !carga_horaria || !cargo || !caminho_arquivo) {
-    return res.status(400).send("Campos obrigatórios não fornecidos");
+    return res.status(400).send("Campos não preenchidos...");
   }
 
   const query = `
