@@ -46,11 +46,11 @@ const consumeMessage = async (channel, message) => {
         caminho_certificado: pdfPath,
       });
       console.log(
-        "Caminho do certificado atualizado com sucesso no banco de dados"
+        "Caminho do bd atualizado"
       );
     } catch (err) {
       console.error(
-        "Erro ao atualizar o caminho do certificado no banco de dados:",
+        "Erro ao atualizar o do bd ",
         err
       );
     }
@@ -71,8 +71,8 @@ const nomePdf = (name, curso) => {
   return `${primeiroNome}_${ultimoname}_${curso}.pdf`;
 };
 
-const workerInit = async () => {
-  const maxRetries = 5;
+const workerFunction = async () => {
+  const maxRetries = 6;
   let retries = 0;
 
   while (retries < maxRetries) {
@@ -86,16 +86,16 @@ const workerInit = async () => {
         consumeMessage(channel, message);
       });
 
-      console.log("Worker iniciado. Aguardando mensagens...");
+      console.log("Worker iniciando...");
       break;
     } catch (err) {
       retries += 1;
       console.error(
-        `Erro de conexão com o RabbitMQ. Retentando em 5 segundos... (${retries}/${maxRetries})`
+        `Erro de conexão com o RabbitMQ. Tentando novamente em 5 segundos... (${retries}/${maxRetries})`
       );
       await new Promise((resolve) => setTimeout(resolve, 5000));
     }
   }
 };
 
-workerInit();
+workerFunction();

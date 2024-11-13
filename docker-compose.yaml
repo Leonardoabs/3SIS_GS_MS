@@ -11,6 +11,13 @@ services:
       - certificado_network
     volumes:
       - ./db/ddl.sql:/docker-entrypoint-initdb.d/ddl.sql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "certificates"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+
   
   rabbitmq:
     image: rabbitmq:3-management
