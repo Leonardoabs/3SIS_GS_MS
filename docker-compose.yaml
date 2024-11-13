@@ -18,12 +18,18 @@ services:
       start_period: 30s
       timeout: 10s
 
-  
   rabbitmq:
     image: rabbitmq:3-management
     ports:
       - "5672:5672"
       - "15672:15672"
+    networks:
+      - certificado_network
+
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
     networks:
       - certificado_network
 
@@ -34,6 +40,7 @@ services:
     depends_on:
       - postgres
       - rabbitmq
+      - redis
     ports:
       - "3000:3000"
     networks:
@@ -46,6 +53,7 @@ services:
     depends_on:
       - rabbitmq
       - postgres
+      - redis
     volumes:
       - ./worker/arquivo_pdf:/app/worker/arquivo_pdf
     networks:

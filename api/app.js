@@ -2,10 +2,22 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const { Client } = require("pg");
 const amqp = require("amqplib");
+const redis = require('redis');
 const app = express();
 
+// Criação do cliente Redis
+const clientRedis = redis.createClient({
+    url: 'redis://redis:6379'
+});
+
+clientRedis.on('error', (err) => {
+    console.error('Erro na conexão com Redis:', err);
+});
+
+// Processamento do jSON
 app.use(bodyParser.json());
 
+// Configuração PostgreSQL
 const client = new Client({
   user: "postgres",
   password: "postgres",
@@ -14,6 +26,7 @@ const client = new Client({
   database: "gerador_certificado",
 });
 
+// Conexão PostgreSQL
 const clientInit = async () => {
   const maxRetries = 5;
   let retries = 0;
@@ -26,7 +39,7 @@ const clientInit = async () => {
     } catch (err) {
       retries += 1;
       console.error(
-        `Erro de conexão com o Banco de dados. Retentando em 5 segundos... (${retries}/${maxRetries})`
+        `Erro de conexão com o BD. Retentando em 5 segundos... (${retries}/${maxRetries})`
       );
       await new Promise((resolve) => setTimeout(resolve, 5000));
     }
@@ -35,12 +48,13 @@ const clientInit = async () => {
 
 clientInit();
 
-const sentToQueue = async (message) => {
+// Enviar mensagens para a fila RabbitMQ
+const envioMsg = async (message) => {
   try {
     const connection = await amqp.connect("amqp://guest:guest@rabbitmq:5672");
     const channel = await connection.createChannel();
 
-    const queue = "certificados";
+    const queue = "diploma";
 
     await channel.assertQueue(queue, { durable: true });
 
@@ -48,15 +62,16 @@ const sentToQueue = async (message) => {
       persistent: true,
     });
 
-    console.log("Mensagem enviada com sucesso", message);
+    console.log("Mensagem enviada para a fila RabbitMQ: ", message);
 
     await channel.close();
     await connection.close();
   } catch (error) {
-    console.error("Erro ao enviar mensagem para fila", error);
+    console.error("Erro ao enviar mensagem para RabbitMQ:", error);
   }
 };
 
+// Rota para criar um novo diploma
 app.post("/diploma", async (req, res) => {
   const {
     nome,
@@ -71,12 +86,15 @@ app.post("/diploma", async (req, res) => {
     caminho_arquivo
   } = req.body;
 
-  if (!req.body) {
-    return res.status(400).send("Corpo da requisição vazio");
+  // Verificação se os dados foram fornecidos
+  if (!nome || !nacionalidade || !estado || !data_nascimento || !rg || !data_termino || !curso || !carga_horaria || !cargo || !caminho_arquivo) {
+    return res.status(400).send("Campos obrigatórios não fornecidos");
   }
 
-  const query =
-    "INSERT INTO certificados (nome, nacionalidade, estado, data_nascimento, rg, data_termino, curso, carga_horaria, cargo, caminho_arquivo) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)";
+  const query = `
+    INSERT INTO certificates (nome, nacionalidade, estado, data_nascimento, rg, data_termino, curso, carga_horaria, cargo, caminho_arquivo)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+  `;
 
   try {
     await client.query(query, [
@@ -92,41 +110,83 @@ app.post("/diploma", async (req, res) => {
       caminho_arquivo,
     ]);
 
-    sentToQueue(req.body);
+    envioMsg(req.body);
 
-    res.status(201).send("Certificado criado com sucesso");
+    res.status(201).send("Diploma criado!");
   } catch (err) {
-    console.log("deu ruim", err);
+    console.log("Erro ao criar diploma:", err);
+    res.status(500).send("Erro interno ao criar diploma");
   }
 });
 
+// Atualizar o caminho do arquivo Diploma
 app.put("/diploma-path/:nome", async (req, res) => {
   const { nome } = req.params;
   const { caminho_arquivo } = req.body;
 
+  // Verifica se o caminho do arquivo foi fornecido
   if (!caminho_arquivo) {
-    return res.status(400).send("Campo Obrigatório");
+    return res.status(400).send("Campo obrigatório 'caminho_arquivo' não fornecido");
   }
 
-  const query =
-    "UPDATE certificados SET caminho_arquivo = $1 WHERE nome = $2";
+  const query = `
+    UPDATE certificates 
+    SET caminho_arquivo = $1 
+    WHERE nome = $2
+  `;
 
   try {
     const result = await client.query(query, [caminho_arquivo, nome]);
 
     if (result.rowCount === 0) {
-      return res.status(404).send("Certificado não encontrado");
+      return res.status(404).send("Diploma não encontrado");
     }
 
-    res.status(200).send("caminho_certificado atualizado com sucesso");
+    res.status(200).send("Caminho do arquivo atualizado");
   } catch (err) {
-    console.log("Erro ao atualizar caminho_certificado", err);
-    res.status(500).send("Erro interno no servidor");
+    console.log("Erro ao atualizar caminho de arquivo:", err);
+    res.status(500).send("Erro interno ao atualizar caminho de arquivo");
   }
 });
 
+// Rota para ver o caminho do arquivo do diploma (Cache rEDIS)
+app.get("/diploma/:id", async (req, res) => {
+  const { id } = req.params;
+
+  if (!id) {
+    return res.status(400).send("ID do diploma não fornecido");
+  }
+
+  try {
+    const redisKey = `certificado:${id}`;
+    const redisData = await clientRedis.get(redisKey);
+
+    if (redisData) {
+      console.log("Diploma encontrado no cache Redis");
+      return res.status(200).json(JSON.parse(redisData));
+    }
+
+    // Se not enconttrou, busca no BD
+    const query = "SELECT caminho_arquivo FROM certificates WHERE id = $1";
+    const result = await client.query(query, [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).send("Diploma não encontrado para o ID especificado");
+    }
+
+    const caminhoArquivo = result.rows[0].caminho_arquivo;
+
+    await clientRedis.setEx(redisKey, 3600, JSON.stringify(caminhoArquivo));
+
+    res.status(200).json(caminhoArquivo);
+  } catch (err) {
+    console.error("Erro ao buscar diploma:", err);
+    res.status(500).send("Erro interno do servidor");
+  }
+});
+
+// Inicia o servidor na porta 3000
 const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
-
