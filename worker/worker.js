@@ -95,7 +95,7 @@ const workerFunction = async () => {
     } catch (err) {
       retries += 1;
       console.error(
-        `Erro na conexão. Tentando novamente... (${retries}/${maxRetries})`
+        `(${retries}/${maxRetries})`
       );
       await new Promise((resolve) => setTimeout(resolve, 5000));
     }

@@ -1,3 +1,5 @@
+CREATE DATABASE IF NOT EXISTS gerador_certificado;
+
 CREATE TABLE IF NOT EXISTS certificates (
     id SERIAL PRIMARY KEY,
     nome VARCHAR(300) NOT NULL,          

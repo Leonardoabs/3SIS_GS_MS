@@ -7,11 +7,11 @@ const app = express();
 
 // Criação do cliente Redis
 const clientRedis = redis.createClient({
-    url: 'redis://redis:6379'
+  url: 'redis://redis:6379'
 });
 
 clientRedis.on('error', (err) => {
-    console.error('Erro na conexão com Redis:', err);
+  console.error('Erro na conexão com Redis:', err);
 });
 
 // Processamento do jSON
@@ -39,7 +39,7 @@ const initConnection = async () => {
     } catch (err) {
       retries += 1;
       console.error(
-        `Erro de conexão com o BD. Retentando em 5 segundos... (${retries}/${maxRetries})`
+        `(${err}) `
       );
       await new Promise((resolve) => setTimeout(resolve, 5000));
     }
